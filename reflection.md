@@ -2,6 +2,8 @@
 
 ## 1. System Design
 
+The user should be able to add a pet, add a task and modify it, and view an organized plan of the tasks for the day. 
+
 **a. Initial design**
 
 - Briefly describe your initial UML design.
