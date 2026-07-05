@@ -24,9 +24,14 @@ class Task:
     duration_minutes: int
     priority: Priority
     category: str = ""
-    preferred_time: str | None = None
+    preferred_time: str | None = None  # input hint: when the owner would like it
+    scheduled_time: str | None = None  # output: when the scheduler placed it (None = unscheduled)
     is_recurring: bool = False
     completed: bool = False
+
+    def mark_complete(self) -> None:
+        """Mark this task as done."""
+        self.completed = True
 
 
 @dataclass
@@ -39,13 +44,21 @@ class Pet:
     tasks: list[Task] = field(default_factory=list)
 
     def add_task(self, task: Task) -> None:
-        raise NotImplementedError
+        """Attach a task to this pet."""
+        self.tasks.append(task)
 
     def edit_task(self, task: Task) -> None:
-        raise NotImplementedError
+        """Replace an existing task with a matching name, or add it if new."""
+        for i, existing in enumerate(self.tasks):
+            if existing.name == task.name:
+                self.tasks[i] = task
+                return
+        self.tasks.append(task)
 
     def remove_task(self, task: Task) -> None:
-        raise NotImplementedError
+        """Detach a task from this pet (no-op if it isn't attached)."""
+        if task in self.tasks:
+            self.tasks.remove(task)
 
 
 @dataclass
@@ -55,26 +68,63 @@ class Owner:
     pets: list[Pet] = field(default_factory=list)
 
     def add_pet(self, pet: Pet) -> None:
-        raise NotImplementedError
-
-
-@dataclass
-class ScheduledTask:
-    """A task assigned a concrete start time in a generated plan."""
-
-    task: Task
-    start_time: str
+        """Register a pet under this owner."""
+        self.pets.append(pet)
 
 
 class Scheduler:
-    """Stateless scheduling logic: takes tasks + a time budget, returns a plan."""
+    """Stateless scheduling logic: takes a pet + a time budget, returns a plan."""
 
     def generate_plan(
-        self, tasks: list[Task], available_minutes: int
-    ) -> tuple[list[ScheduledTask], list[Task]]:
-        """Return (scheduled, skipped) — tasks that fit vs. those dropped."""
-        raise NotImplementedError
+        self, pet: Pet, available_minutes: int
+    ) -> tuple[list[Task], list[Task]]:
+        """Return (scheduled, skipped) for the pet's tasks — those that fit vs. those dropped.
 
-    def explain(self) -> str:
-        """Explain why the plan ordered/dropped tasks the way it did."""
-        raise NotImplementedError
+        Tasks are considered highest-priority first; within a priority, longer
+        tasks are placed first. A task is scheduled if it fits in the remaining
+        budget, and its `scheduled_time` is set to its `preferred_time` when
+        available. Anything that doesn't fit is skipped (and unscheduled).
+        """
+        ordered = sorted(
+            pet.tasks,
+            key=lambda t: (t.priority, t.duration_minutes),
+            reverse=True,
+        )
+
+        scheduled: list[Task] = []
+        skipped: list[Task] = []
+        remaining = available_minutes
+
+        for task in ordered:
+            if task.duration_minutes <= remaining:
+                task.scheduled_time = task.preferred_time
+                remaining -= task.duration_minutes
+                scheduled.append(task)
+            else:
+                task.scheduled_time = None
+                skipped.append(task)
+
+        return scheduled, skipped
+
+    def explain(self, plan: tuple[list[Task], list[Task]]) -> str:
+        """Explain why the given plan ordered/dropped tasks the way it did."""
+        scheduled, skipped = plan
+        lines = ["Scheduled (highest priority first):"]
+        if scheduled:
+            for task in scheduled:
+                when = task.scheduled_time or "unassigned time"
+                lines.append(
+                    f"  - {task.name}: {task.priority.name} priority, "
+                    f"{task.duration_minutes} min, at {when}"
+                )
+        else:
+            lines.append("  (nothing fit the available time)")
+
+        if skipped:
+            lines.append("Skipped (didn't fit the time budget):")
+            for task in skipped:
+                lines.append(
+                    f"  - {task.name}: needed {task.duration_minutes} min"
+                )
+
+        return "\n".join(lines)
