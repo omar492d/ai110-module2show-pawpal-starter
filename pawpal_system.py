@@ -1,9 +1,3 @@
-"""PawPal+ domain model.
-
-Class stubs generated from diagrams/uml_draft.mmd. No scheduling logic yet —
-methods raise NotImplementedError until implemented in later steps.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -78,13 +72,7 @@ class Scheduler:
     def generate_plan(
         self, pet: Pet, available_minutes: int
     ) -> tuple[list[Task], list[Task]]:
-        """Return (scheduled, skipped) for the pet's tasks — those that fit vs. those dropped.
-
-        Tasks are considered highest-priority first; within a priority, longer
-        tasks are placed first. A task is scheduled if it fits in the remaining
-        budget, and its `scheduled_time` is set to its `preferred_time` when
-        available. Anything that doesn't fit is skipped (and unscheduled).
-        """
+        """Fit the pet's tasks into the time budget (priority first); return (scheduled, skipped)."""
         ordered = sorted(
             pet.tasks,
             key=lambda t: (t.priority, t.duration_minutes),
