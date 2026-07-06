@@ -55,20 +55,14 @@ Today's Schedule for Omar
 14:00  Rex      Vet checkup (45 min, MEDIUM)
 18:30  Mittens  Playtime (20 min, LOW)
 ============================================
-
-#TODO: remove example below
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
 ```
 
 ## 🧪 Testing PawPal+
+The tests in tests/test_pawpal.py verify the program's core behaviors: marking tasks complete, adding tasks to pets, sorting tasks chronologically, spawning next-day occurrences for recurring tasks, and flagging scheduling conflicts at duplicate time slots.
 
 ```bash
 # Run the full test suite:
-pytest
+python -m pytest
 
 # Run with coverage:
 pytest --cov
@@ -77,8 +71,17 @@ pytest --cov
 Sample test output:
 
 ```
-# Paste your pytest output here
+====================================================================================== test session starts =======================================================================================
+platform darwin -- Python 3.13.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/omard./Downloads/ai110-module2show-pawpal-starter
+plugins: anyio-4.14.0
+collected 9 items                                                  
+
+tests/test_pawpal.py .........                                                 [100%]
+
+======================================================================================= 9 passed in 0.02s ========================================================================================
 ```
+Confidence Level: 4/5
 
 ## 📐 Smarter Scheduling
 
