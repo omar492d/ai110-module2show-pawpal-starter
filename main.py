@@ -13,16 +13,8 @@ def build_owner() -> Owner:
     owner.add_pet(rex)
     owner.add_pet(mittens)
 
-    # At least three tasks, each with a different preferred time.
-    rex.add_task(
-        Task(
-            name="Morning walk",
-            duration_minutes=30,
-            priority=Priority.HIGH,
-            category="Exercise",
-            preferred_time="07:30",
-        )
-    )
+    # Tasks are added out of chronological order on purpose, so the
+    # sort_by_time demo below has something real to reorder.
     rex.add_task(
         Task(
             name="Vet checkup",
@@ -32,13 +24,13 @@ def build_owner() -> Owner:
             preferred_time="14:00",
         )
     )
-    mittens.add_task(
+    rex.add_task(
         Task(
-            name="Feed breakfast",
-            duration_minutes=10,
+            name="Morning walk",
+            duration_minutes=30,
             priority=Priority.HIGH,
-            category="Feeding",
-            preferred_time="08:00",
+            category="Exercise",
+            preferred_time="07:30",
         )
     )
     mittens.add_task(
@@ -50,6 +42,30 @@ def build_owner() -> Owner:
             preferred_time="18:30",
         )
     )
+    mittens.add_task(
+        Task(
+            name="Feed breakfast",
+            duration_minutes=10,
+            priority=Priority.HIGH,
+            category="Feeding",
+            preferred_time="08:00",
+        )
+    )
+    # Deliberate clash: Rex needs meds at 08:00, the same slot as Mittens'
+    # breakfast above -> a cross-pet conflict for detect_conflicts to catch.
+    rex.add_task(
+        Task(
+            name="Give medication",
+            duration_minutes=5,
+            priority=Priority.HIGH,
+            category="Health",
+            preferred_time="08:00",
+        )
+    )
+
+    # Mark a couple of tasks done so the completion filter has both sides.
+    rex.tasks[0].mark_complete()      # Vet checkup
+    mittens.tasks[1].mark_complete()  # Feed breakfast
 
     return owner
 
@@ -78,5 +94,59 @@ def print_todays_schedule(owner: Owner) -> None:
     print("=" * 44)
 
 
+def demo_sorting(owner: Owner) -> None:
+    """Show Scheduler.sort_by_time reordering tasks that were added out of order."""
+    scheduler = Scheduler()
+
+    # Give tasks a scheduled_time to sort by (the scheduler copies preferred_time).
+    all_tasks: list[Task] = []
+    for pet in owner.pets:
+        scheduled, _skipped = scheduler.generate_plan(pet, owner.available_minutes)
+        all_tasks.extend(scheduled)
+
+    print("\nAll scheduled tasks, in the order they were added:")
+    for task in all_tasks:
+        print(f"  {task.scheduled_time}  {task.name}")
+
+    print("\nSame tasks after Scheduler.sort_by_time():")
+    for task in scheduler.sort_by_time(all_tasks):
+        print(f"  {task.scheduled_time}  {task.name}")
+
+
+def demo_filtering(owner: Owner) -> None:
+    """Show Owner.filter_tasks narrowing by completion status and by pet name."""
+    print("\nfilter_tasks(completed=False)  -> still to do:")
+    for task in owner.filter_tasks(completed=False):
+        print(f"  {task.name}")
+
+    print("\nfilter_tasks(completed=True)   -> already done:")
+    for task in owner.filter_tasks(completed=True):
+        print(f"  {task.name}")
+
+    print("\nfilter_tasks(pet_name='Rex')   -> all of Rex's tasks:")
+    for task in owner.filter_tasks(pet_name="Rex"):
+        status = "done" if task.completed else "pending"
+        print(f"  {task.name} ({status})")
+
+
+def demo_conflicts(owner: Owner) -> None:
+    """Schedule every pet, then show Scheduler.detect_conflicts warning on clashes."""
+    scheduler = Scheduler()
+    for pet in owner.pets:
+        scheduler.generate_plan(pet, owner.available_minutes)
+
+    print("\nConflict check:")
+    warnings = scheduler.detect_conflicts(owner)
+    if warnings:
+        for warning in warnings:
+            print(f"  ⚠️  {warning}")
+    else:
+        print("  No conflicts — every task has its own time slot.")
+
+
 if __name__ == "__main__":
-    print_todays_schedule(build_owner())
+    owner = build_owner()
+    print_todays_schedule(owner)
+    demo_sorting(owner)
+    demo_filtering(owner)
+    demo_conflicts(owner)

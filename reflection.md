@@ -33,7 +33,9 @@ The user should be able to add a pet, add a task and modify it, and view an orga
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+    One tradeoff my scheduler makes is that it packs tasks greedily by priority against a single pool of available minutes, rather than placing them on a real clock-based timeline. It sorts tasks so the highest-priority ones are chosen first and simply drops the rest once the time budget runs out. This is fast (one pass through the tasks) and easy to reason about, and it guarantees that the most important care tasks are never skipped in favor of trivial ones.
 - Why is that tradeoff reasonable for this scenario?
+    The downside is that it doesn't reason about when tasks actually happen, so two tasks can be assigned the same preferred time without the scheduler resolving it — which is why conflict detection is handled separately as an advisory warning. For this scenario that tradeoff is reasonable: a pet owner's day has only a handful of tasks, so a simple priority-first plan is predictable and good enough, and surfacing conflicts as a warning lets the owner make the final call instead of the program guessing.
 
 ---
 

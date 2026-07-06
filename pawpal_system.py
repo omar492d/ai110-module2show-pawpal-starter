@@ -1,7 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from datetime import date, timedelta
 from enum import IntEnum
+
+
+# How far ahead the next occurrence lands, per recurrence rule.
+RECURRENCE_STEPS: dict[str, timedelta] = {
+    "daily": timedelta(days=1),
+    "weekly": timedelta(weeks=1),  # timedelta(weeks=1) == timedelta(days=7)
+}
 
 
 class Priority(IntEnum):
@@ -20,12 +28,27 @@ class Task:
     category: str = ""
     preferred_time: str | None = None  # input hint: when the owner would like it
     scheduled_time: str | None = None  # output: when the scheduler placed it (None = unscheduled)
-    is_recurring: bool = False
+    recurrence: str | None = None  # "daily", "weekly", or None for a one-off task
+    due_date: date | None = None  # the day this occurrence is due
     completed: bool = False
 
-    def mark_complete(self) -> None:
-        """Mark this task as done."""
+    def next_occurrence(self) -> Task | None:
+        """Return a fresh copy due one recurrence step later, or None if it's a one-off."""
+        step = RECURRENCE_STEPS.get((self.recurrence or "").lower())
+        if step is None:
+            return None
+        base = self.due_date or date.today()
+        return replace(
+            self,
+            due_date=base + step,
+            completed=False,
+            scheduled_time=None,
+        )
+
+    def mark_complete(self) -> Task | None:
+        """Mark this task done; if it recurs, return the next occurrence to schedule."""
         self.completed = True
+        return self.next_occurrence()
 
 
 @dataclass
@@ -65,6 +88,23 @@ class Owner:
         """Register a pet under this owner."""
         self.pets.append(pet)
 
+    def filter_tasks(
+        self,
+        *,
+        completed: bool | None = None,
+        pet_name: str | None = None,
+    ) -> list[Task]:
+        """Return tasks across all pets, narrowed by completion status and/or pet name (None skips a filter)."""
+        results: list[Task] = []
+        for pet in self.pets:
+            if pet_name is not None and pet.name != pet_name:
+                continue
+            for task in pet.tasks:
+                if completed is not None and task.completed != completed:
+                    continue
+                results.append(task)
+        return results
+
 
 class Scheduler:
     """Stateless scheduling logic: takes a pet + a time budget, returns a plan."""
@@ -93,6 +133,37 @@ class Scheduler:
                 skipped.append(task)
 
         return scheduled, skipped
+
+    def complete_task(self, pet: Pet, task: Task) -> Task | None:
+        """Mark a task complete, auto-add its next occurrence to the pet if it recurs, and return it (or None)."""
+        next_task = task.mark_complete()
+        if next_task is not None:
+            pet.add_task(next_task)
+        return next_task
+
+    def sort_by_time(self, tasks: list[Task]) -> list[Task]:
+        """Return tasks ordered by scheduled_time ("HH:MM"); unscheduled tasks last."""
+        return sorted(
+            tasks,
+            key=lambda t: t.scheduled_time or "99:99",
+        )
+
+    def detect_conflicts(self, owner: Owner) -> list[str]:
+        """Return a warning per time slot shared by 2+ scheduled tasks (same- or cross-pet); empty if none."""
+        by_time: dict[str, list[tuple[str, Task]]] = {}
+        for pet in owner.pets:
+            for task in pet.tasks:
+                if task.scheduled_time is None:
+                    continue  # unscheduled tasks can't clash
+                by_time.setdefault(task.scheduled_time, []).append((pet.name, task))
+
+        warnings: list[str] = []
+        for when in sorted(by_time):
+            clashing = by_time[when]
+            if len(clashing) > 1:
+                who = ", ".join(f"{pet_name}'s '{task.name}'" for pet_name, task in clashing)
+                warnings.append(f"Conflict at {when}: {who} are all scheduled together.")
+        return warnings
 
     def explain(self, plan: tuple[list[Task], list[Task]]) -> str:
         """Explain why the given plan ordered/dropped tasks the way it did."""
