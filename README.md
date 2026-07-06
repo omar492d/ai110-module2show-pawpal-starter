@@ -51,10 +51,42 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 Today's Schedule for Omar
 ============================================
 07:30  Rex      Morning walk (30 min, HIGH)
+08:00  Rex      Give medication (5 min, HIGH)
 08:00  Mittens  Feed breakfast (10 min, HIGH)
 14:00  Rex      Vet checkup (45 min, MEDIUM)
 18:30  Mittens  Playtime (20 min, LOW)
 ============================================
+
+All scheduled tasks, in the order they were added:
+  07:30  Morning walk
+  08:00  Give medication
+  14:00  Vet checkup
+  08:00  Feed breakfast
+  18:30  Playtime
+
+Same tasks after Scheduler.sort_by_time():
+  07:30  Morning walk
+  08:00  Give medication
+  08:00  Feed breakfast
+  14:00  Vet checkup
+  18:30  Playtime
+
+filter_tasks(completed=False)  -> still to do:
+  Morning walk
+  Give medication
+  Playtime
+
+filter_tasks(completed=True)   -> already done:
+  Vet checkup
+  Feed breakfast
+
+filter_tasks(pet_name='Rex')   -> all of Rex's tasks:
+  Vet checkup (done)
+  Morning walk (pending)
+  Give medication (pending)
+
+Conflict check:
+  ⚠️  Conflict at 08:00: Rex's 'Give medication', Mittens's 'Feed breakfast' are all scheduled together.
 ```
 
 ## 🧪 Testing PawPal+
