@@ -81,7 +81,6 @@ tests/test_pawpal.py .........                                                 [
 
 ======================================================================================= 9 passed in 0.02s ========================================================================================
 ```
-Confidence Level: 4/5
 
 ## 📐 Smarter Scheduling
 
@@ -96,10 +95,11 @@ Confidence Level: 4/5
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. In the **sidebar**, set the **owner name** and the **available minutes** for the day (this is the time budget the scheduler fits tasks into).
+2. Still in the sidebar, use the **Add a pet** form to enter the pet's name, species, age, gender, and breed, then click **Add pet**. The pet becomes active and its details appear as a header in the main area.
+3. On the **📋 Tasks** tab, add tasks one at a time: enter a title, duration, priority (low/medium/high), preferred time (`HH:MM`), and whether it **repeats** (one-off/daily/weekly), then click **Add task**. Each task appears in the task list below.
+4. Manage tasks from the list: check a task off to mark it **complete** (a recurring task automatically spawns its next occurrence), remove one with the **🗑️** button, or narrow the view with the **All / Pending / Completed** filter.
+5. On the **🗓️ Schedule** tab, click **Generate schedule** to run the scheduler across all pets — it fits tasks into the budget priority-first, then sorts them chronologically into today's plan.
+6. Review the results. The app shows today's schedule for tasks that were successfully scheduled, displays the tasks that do not fit the time budget, warns the user in case of a time conflict, and provides a simple explanation for the selected plan.
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here --> 

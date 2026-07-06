@@ -1,0 +1,59 @@
+classDiagram
+    %% PawPal+ class design (final)
+    %% Data classes (Owner, Pet, Task) hold state; Scheduler is stateless logic.
+
+    class Priority {
+        <<IntEnum>>
+        LOW = 1
+        MEDIUM = 2
+        HIGH = 3
+    }
+
+    class Owner {
+        +str name
+        +int available_minutes
+        +list~Pet~ pets
+        +add_pet(pet) None
+        +filter_tasks(completed, pet_name) list~Task~
+    }
+
+    class Pet {
+        +str name
+        +int age
+        +str species
+        +str breed
+        +str gender
+        +list~Task~ tasks
+        +add_task(task) None
+        +edit_task(task) None
+        +remove_task(task) None
+    }
+
+    class Task {
+        +str name
+        +int duration_minutes
+        +Priority priority
+        +str category
+        +str preferred_time
+        +str scheduled_time
+        +str recurrence
+        +date due_date
+        +bool completed
+        +next_occurrence() Task
+        +mark_complete() Task
+    }
+
+    class Scheduler {
+        +generate_plan(pet, available_minutes) tuple~list~Task~, list~Task~~
+        +complete_task(pet, task) Task
+        +sort_by_time(tasks) list~Task~
+        +detect_conflicts(owner) list~str~
+        +explain(plan) str
+    }
+
+    Owner "1" --> "*" Pet : owns
+    Pet "1" --> "*" Task : has
+    Task "1" --> "1" Priority : rated by
+    Scheduler ..> Pet : plans
+    Scheduler ..> Owner : checks conflicts
+    Scheduler ..> Task : orders
